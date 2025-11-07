@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Spring Boot 3.2.7 RAG (Retrieval Augmented Generation) demo application using Spring AI 1.0.0, OpenAI models, and PGVector for vector storage. The application demonstrates a complete RAG workflow: document loading, vector storage, similarity search, and LLM-based generation.
+This is a Spring Boot 3.2.7 RAG (Retrieval Augmented Generation) demo application using Spring AI 1.0.3, OpenAI models, and PGVector for vector storage. The application demonstrates a complete RAG workflow: document loading, vector storage, similarity search, and LLM-based generation.
 
 **Package**: `com.swiftbeard.rag_demo` (note: uses underscore, not hyphen)
 

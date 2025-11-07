@@ -174,7 +174,7 @@ src/main/resources/
 ## Dependencies
 
 - Spring Boot 3.2.7
-- Spring AI 1.0.0
+- Spring AI 1.0.3
 - PostgreSQL JDBC Driver
 - Apache Tika (via Spring AI)
 
