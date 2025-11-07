@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: rag-demo
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rag_demo
+    username: a267246
+    driver-class-name: org.postgresql.Driver
+
+  ai:
+    openai:
+      base-url: http://127.0.0.1:1234
+      api-key: "not-needed"
+      embedding:
+        options:
+          model: text-embedding-nomic-embed-text-v2-moe
+          dimensions: 768
+      chat:
+        base-url: https://openrouter.ai/api
+        api-key: ${OPENROUTER_API_KEY}
+        options:
+          model: google/gemini-2.5-flash
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 768
+
