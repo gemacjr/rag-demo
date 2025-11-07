@@ -1,5 +1,6 @@
 package com.swiftbeard.rag_demo;
 
+import com.swiftbeard.rag_demo.cofig.DocumentLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

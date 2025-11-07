@@ -48,18 +48,36 @@ Uses Gradle with Java 21 toolchain.
 2. **Vector Storage (VectorStore)**: Uses PGVector with HNSW indexing and cosine distance similarity. Configured for 768-dimensional embeddings.
 
 3. **Retrieval & Generation (RagService)**:
-   - Performs similarity search against vector store (top K=4 documents)
+   - Performs similarity search against vector store with configurable top-K (default 4, range 1-20)
    - Augments prompt with retrieved document context
    - Sends augmented prompt to LLM for generation
+   - Returns answer with source citations
 
-4. **API Layer (RagController)**: Single POST endpoint `/ai/rag` accepts MessageRequest and returns generated response.
+4. **API Layer (RagController)**: REST endpoints for RAG queries, document upload, and document management.
+
+5. **Document Management**:
+   - DocumentMetadata entity tracks uploaded documents (filename, size, chunk count, timestamp)
+   - DocumentUploadService processes and stores documents with metadata tagging
+   - DocumentService provides CRUD operations for document metadata
+
+6. **Query History**:
+   - QueryHistory entity stores all queries (query, answer, topK, sourceCount, executionTime, timestamp)
+   - Automatically saved after each RAG query execution
+   - QueryHistoryService provides retrieval, filtering, and deletion operations
 
 ### Key Components
 
-- **RagService**: Core RAG logic - retrieval from vector store, prompt augmentation, LLM generation
+- **RagService**: Core RAG logic - retrieval from vector store, prompt augmentation, LLM generation, source citations, query history tracking
+- **RagResponse**: Response DTO containing answer and list of SourceCitation objects
+- **SourceCitation**: Contains document ID, filename, content excerpt, and similarity score
+- **MessageRequest**: Request DTO with message and optional topK parameter (validated range 1-20, default 4)
+- **DocumentUploadService**: Handles document upload, parsing (PDF/Tika), chunking, and metadata storage
+- **DocumentService**: Manages document metadata operations (list, get, delete, count)
+- **DocumentMetadata**: JPA entity for document metadata storage
+- **QueryHistoryService**: Manages query history operations (save, retrieve, filter, delete)
+- **QueryHistory**: JPA entity storing query details, answers, and execution metrics
 - **DocumentLoader**: Startup component that populates vector store with initial documents
-- **RagController**: REST endpoint for RAG queries
-- **MessageRequest**: Simple record for request body
+- **RagController**: REST endpoints for all RAG, document, and query history operations
 
 ### Configuration (application.yaml)
 

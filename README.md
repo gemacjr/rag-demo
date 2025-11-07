@@ -97,20 +97,281 @@ Successfully uploaded and processed 42 document chunks from document.pdf
 
 ### Query RAG System
 
-Ask questions based on uploaded documents.
+Ask questions based on uploaded documents with source citations and configurable retrieval.
 
 **Endpoint**: `POST /ai/rag`
 
-**Request**:
+**Request (with default topK=4)**:
 ```bash
 curl -X POST http://localhost:8080/ai/rag \
   -H "Content-Type: application/json" \
   -d '{"message": "What is StarlightDB?"}'
 ```
 
+**Request (with custom topK)**:
+```bash
+curl -X POST http://localhost:8080/ai/rag \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What is StarlightDB?",
+    "topK": 10
+  }'
+```
+
+**Parameters**:
+- **message** (required): The question or query text
+- **topK** (optional): Number of document chunks to retrieve
+  - Default: 4
+  - Minimum: 1
+  - Maximum: 20
+  - Values outside this range are automatically clamped
+
+**Response**:
+```json
+{
+  "answer": "StarlightDB is a serverless graph database designed for real-time analytics on complex, interconnected data. It features a 'Quantum-Leap' query engine that uses speculative execution to deliver query results up to 100x faster than traditional graph databases.",
+  "sources": [
+    {
+      "documentId": "1",
+      "filename": "starlightdb-docs.pdf",
+      "content": "StarlightDB is a serverless graph database designed for real-time analytics on complex, interconnected data.",
+      "similarityScore": null
+    },
+    {
+      "documentId": "1",
+      "filename": "starlightdb-docs.pdf",
+      "content": "The core of StarlightDB is its 'Quantum-Leap' query engine, which uses speculative execution to deliver query results up to 100x faster than traditional...",
+      "similarityScore": null
+    }
+  ],
+  "sourceCount": 2
+}
+```
+
+**Key Features**:
+- **answer**: The LLM-generated response based on retrieved context
+- **sources**: Array of source documents used to generate the answer
+  - **documentId**: ID of the source document in the database
+  - **filename**: Original filename of the document
+  - **content**: Excerpt from the document (truncated to 200 characters)
+  - **similarityScore**: Semantic similarity score (if available from vector store)
+- **sourceCount**: Total number of source documents used
+
+**Use Cases for topK**:
+- **Lower values (1-3)**: Faster responses with more focused context
+- **Default (4)**: Balanced approach for most queries
+- **Higher values (5-10)**: More comprehensive context for complex questions
+- **Maximum (20)**: Extensive context when thoroughness is critical
+
+### List Documents
+
+Get a list of all uploaded documents with metadata.
+
+**Endpoint**: `GET /ai/documents`
+
+**Request**:
+```bash
+curl http://localhost:8080/ai/documents
+```
+
+**Response**:
+```json
+[
+  {
+    "id": 1,
+    "filename": "document.pdf",
+    "contentType": "application/pdf",
+    "fileSize": 204800,
+    "chunkCount": 42,
+    "uploadedAt": "2025-11-07T10:30:00"
+  },
+  {
+    "id": 2,
+    "filename": "notes.txt",
+    "contentType": "text/plain",
+    "fileSize": 5120,
+    "chunkCount": 3,
+    "uploadedAt": "2025-11-07T11:15:00"
+  }
+]
+```
+
+### Get Document Details
+
+Get metadata for a specific document.
+
+**Endpoint**: `GET /ai/documents/{id}`
+
+**Request**:
+```bash
+curl http://localhost:8080/ai/documents/1
+```
+
+**Response**:
+```json
+{
+  "id": 1,
+  "filename": "document.pdf",
+  "contentType": "application/pdf",
+  "fileSize": 204800,
+  "chunkCount": 42,
+  "uploadedAt": "2025-11-07T10:30:00"
+}
+```
+
+### Delete Document
+
+Delete a document and its metadata from the system.
+
+**Endpoint**: `DELETE /ai/documents/{id}`
+
+**Request**:
+```bash
+curl -X DELETE http://localhost:8080/ai/documents/1
+```
+
 **Response**:
 ```
-StarlightDB is a serverless graph database designed for real-time analytics...
+Document deleted successfully
+```
+
+**Note**: Currently, only document metadata is deleted. Vector embeddings remain in the store but won't appear in the document list. For production use, implement vector store cleanup via custom queries, background jobs, or a vector store that supports metadata-based deletion.
+
+### Get Document Count
+
+Get the total number of uploaded documents.
+
+**Endpoint**: `GET /ai/documents/count`
+
+**Request**:
+```bash
+curl http://localhost:8080/ai/documents/count
+```
+
+**Response**:
+```
+5
+```
+
+### Get All Query History
+
+Retrieve all past queries and their responses.
+
+**Endpoint**: `GET /ai/history`
+
+**Request**:
+```bash
+curl http://localhost:8080/ai/history
+```
+
+**Response**:
+```json
+[
+  {
+    "id": 1,
+    "query": "What is StarlightDB?",
+    "answer": "StarlightDB is a serverless graph database designed for real-time analytics...",
+    "topK": 4,
+    "sourceCount": 3,
+    "timestamp": "2025-11-07T14:30:15",
+    "executionTimeMs": 1245
+  },
+  {
+    "id": 2,
+    "query": "How does Chrono-Sync work?",
+    "answer": "Chrono-Sync allows time-travel queries...",
+    "topK": 4,
+    "sourceCount": 2,
+    "timestamp": "2025-11-07T14:25:10",
+    "executionTimeMs": 980
+  }
+]
+```
+
+### Get Recent Query History
+
+Retrieve the most recent queries with a limit.
+
+**Endpoint**: `GET /ai/history/recent?limit={limit}`
+
+**Request**:
+```bash
+# Get last 5 queries (default limit is 10)
+curl http://localhost:8080/ai/history/recent?limit=5
+```
+
+**Response**: Same format as "Get All Query History"
+
+### Get Query History by ID
+
+Retrieve a specific query from history.
+
+**Endpoint**: `GET /ai/history/{id}`
+
+**Request**:
+```bash
+curl http://localhost:8080/ai/history/1
+```
+
+**Response**:
+```json
+{
+  "id": 1,
+  "query": "What is StarlightDB?",
+  "answer": "StarlightDB is a serverless graph database designed for real-time analytics...",
+  "topK": 4,
+  "sourceCount": 3,
+  "timestamp": "2025-11-07T14:30:15",
+  "executionTimeMs": 1245
+}
+```
+
+### Get Query History Count
+
+Get the total number of queries in history.
+
+**Endpoint**: `GET /ai/history/count`
+
+**Request**:
+```bash
+curl http://localhost:8080/ai/history/count
+```
+
+**Response**:
+```
+42
+```
+
+### Delete Query History
+
+Delete a specific query from history.
+
+**Endpoint**: `DELETE /ai/history/{id}`
+
+**Request**:
+```bash
+curl -X DELETE http://localhost:8080/ai/history/1
+```
+
+**Response**:
+```
+Query history deleted successfully
+```
+
+### Delete All Query History
+
+Clear all query history.
+
+**Endpoint**: `DELETE /ai/history`
+
+**Request**:
+```bash
+curl -X DELETE http://localhost:8080/ai/history
+```
+
+**Response**:
+```
+All query history deleted successfully
 ```
 
 ## Configuration Details
@@ -230,3 +491,11 @@ echo $OPENROUTER_API_KEY
 ## License
 
 This is a demonstration project.
+1. List/Delete Documents - Basic CRUD for document management
+2. Source Citations - Return which documents were used in the answer
+3. Configurable Top-K - Allow users to adjust number of retrieved chunks
+4. Query History - Store and display past queries
+5. Web UI - Simple chat interface using Thymeleaf or React
+6. Metadata Filtering - Add tags to documents and filter during retrieval
+7. Response Caching - Cache responses for identical queries
+8. Streaming Responses - Stream LLM responses for better UX

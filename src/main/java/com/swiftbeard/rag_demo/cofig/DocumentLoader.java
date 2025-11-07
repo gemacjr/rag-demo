@@ -1,4 +1,4 @@
-package com.swiftbeard.rag_demo;
+package com.swiftbeard.rag_demo.cofig;
 
 
 import org.springframework.ai.document.Document;

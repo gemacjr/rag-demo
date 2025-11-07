@@ -7,6 +7,14 @@ spring:
     username: a267246
     driver-class-name: org.postgresql.Driver
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
   ai:
     openai:
       base-url: http://127.0.0.1:1234

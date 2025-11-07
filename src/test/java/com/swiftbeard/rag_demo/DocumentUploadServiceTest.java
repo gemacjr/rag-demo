@@ -1,5 +1,8 @@
 package com.swiftbeard.rag_demo;
 
+import com.swiftbeard.rag_demo.model.DocumentMetadata;
+import com.swiftbeard.rag_demo.repository.DocumentMetadataRepository;
+import com.swiftbeard.rag_demo.service.DocumentUploadService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,22 +13,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentUploadServiceTest {
 
     @Mock
     private VectorStore vectorStore;
+
+    @Mock
+    private DocumentMetadataRepository documentMetadataRepository;
 
     @Captor
     private ArgumentCaptor<List<Document>> documentCaptor;
@@ -34,7 +39,14 @@ class DocumentUploadServiceTest {
 
     @BeforeEach
     void setUp() {
-        documentUploadService = new DocumentUploadService(vectorStore);
+        documentUploadService = new DocumentUploadService(vectorStore, documentMetadataRepository);
+
+        // Mock the save operation to return a document with an ID (lenient for tests that throw early)
+        lenient().when(documentMetadataRepository.save(any(DocumentMetadata.class))).thenAnswer(invocation -> {
+            DocumentMetadata metadata = invocation.getArgument(0);
+            metadata.setId(1L);
+            return metadata;
+        });
     }
 
     @Test
